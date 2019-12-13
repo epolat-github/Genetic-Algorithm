@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 
 typedef struct genes gene;
 typedef struct chromosome chromosome;
@@ -19,6 +18,7 @@ typedef struct chromosome
     // int id;
     gene *headGene;
     chromosome *nextChromo;
+    chromosome *previousChromo;
     int fitness;
     double rank;
 
@@ -52,7 +52,7 @@ void addChromo(chromosome *newChromo, chromosome *tailChromo)
     newChromo->rank = 0;
     newChromo->headGene = NULL;
     newChromo->nextChromo = NULL;
-    tailChromo->nextChromo = newChromo;
+    // tailChromo->nextChromo = newChromo;
 }
 
 void printChromos(chromosome *headChromo, int POP_SIZE, int PROB_SIZE)
@@ -63,13 +63,13 @@ void printChromos(chromosome *headChromo, int POP_SIZE, int PROB_SIZE)
         gene *geneTemp = tempp->headGene;
         for (size_t i = 0; i < PROB_SIZE; i++)
         {
-            if (geneTemp == NULL)
-            {
-                break;
-            }
+            // if (geneTemp == NULL)
+            // {
+            //     break;
+            // }
             if (i == PROB_SIZE - 1)
             {
-                printf("%d %d\n", geneTemp->value, tempp->fitness);
+                printf("%d %d %f\n", geneTemp->value, tempp->fitness, tempp->rank);
             }
             else
             {
@@ -79,6 +79,19 @@ void printChromos(chromosome *headChromo, int POP_SIZE, int PROB_SIZE)
         }
         tempp = tempp->nextChromo;
     }
+}
+
+int calculatePower(int base, int exponent)
+{
+    int result = 1;
+    int i;
+
+    for (i = 0; i < exponent; i++)
+    {
+        result *= base;
+    }
+
+    return result;
 }
 
 int calculateFitness(chromosome *chromo, int PROB_SIZE)
@@ -92,13 +105,95 @@ int calculateFitness(chromosome *chromo, int PROB_SIZE)
     {
         if (temp->value == 1)
         {
-            int decimal = pow(2, PROB_SIZE - i - 1);
-            total += decimal;
+            int decimalValue = calculatePower(2, PROB_SIZE - i - 1);
+            total += decimalValue;
         }
 
         temp = temp->nextGene;
     }
     return total;
+}
+
+double calculateRank(chromosome *chromo, chromosome *best, chromosome *worst)
+{
+    double chromoFitness = chromo->fitness;
+    double bestFitness = best->fitness;
+    double worstFitness = worst->fitness;
+
+    if (bestFitness == worstFitness)
+    {
+        return 0; //check
+    }
+
+    double result = ((chromoFitness - bestFitness) / (worstFitness - bestFitness));
+    return result;
+}
+
+void sortChromos(chromosome *head, int POP_SIZE)
+{
+    chromosome *tempBestHead = NULL;
+    chromosome *tempChromo = head;
+    chromosome *lastChromoHolder = NULL;
+    chromosome *leastFitnessChromo = head;
+    chromosome *previousChromo = NULL;
+    chromosome *nextChromo = head->nextChromo;
+
+    for (size_t i = 0; i < 8; i++)
+    {
+
+        while (tempChromo->nextChromo != NULL)
+        {
+            if (tempChromo->fitness < leastFitnessChromo->fitness)
+            {
+                leastFitnessChromo = tempChromo;
+                previousChromo = lastChromoHolder;
+                nextChromo = tempChromo->nextChromo;
+            }
+            lastChromoHolder = tempChromo;
+            tempChromo = tempChromo->nextChromo;
+        }
+        printf("least: %d\n", leastFitnessChromo->fitness);
+        if (previousChromo != NULL)
+        {
+            previousChromo->nextChromo = nextChromo;
+            printf("previous of the least: %d\n", previousChromo->fitness);
+        }
+        else
+        {
+            head = nextChromo;
+        }
+
+        printf("next of the least: %d\n", nextChromo->fitness);
+
+        if (tempBestHead == NULL)
+        {
+            leastFitnessChromo->nextChromo = NULL;
+            tempBestHead = leastFitnessChromo;
+        }
+        else
+        {
+            chromosome *lastTerm = tempBestHead;
+            while (lastTerm->nextChromo != NULL)
+            {
+                lastTerm = lastTerm->nextChromo;
+            }
+            leastFitnessChromo->nextChromo = NULL;
+            lastTerm->nextChromo = leastFitnessChromo;
+        }
+
+        printChromos(head, 7, 10);
+        printf("\n\n");
+        printChromos(tempBestHead, 1, 10);
+    }
+
+    // while (tempChromo->nextChromo != NULL)
+    // {
+    //     if(tempChromo->fitness < leastFitnessChromo->fitness)
+    //     {
+    //         leastFitnessChromo = tempChromo;
+    //     }
+    //     tempChromo = tempChromo->nextChromo;
+    // }
 }
 
 int main(int argc, char *argv[])
@@ -135,19 +230,26 @@ int main(int argc, char *argv[])
     }
 
     // INITIALIZE POPULATION
-    chromosome headChromo = {NULL, NULL, 0, 0};
+    chromosome headChromo = {NULL, NULL, NULL, 0, 0};
 
-    chromosome *headPtr = &headChromo;
-    chromosome *tailPtr = &headChromo;
+    chromosome *headPtr = malloc(sizeof(chromosome));
+    headPtr = &headChromo;
+    chromosome *tailPtr = malloc(sizeof(chromosome));
+    tailPtr = &headChromo;
+    int chromoCount = 0;
 
     char ch = fgetc(populationFilePtr);
     while (ch != EOF)
     {
         if (ch == '\n')
         {
+
             chromosome *newChromo = malloc(sizeof(chromosome));
             addChromo(newChromo, tailPtr);
-            tailPtr = newChromo;
+
+            tailPtr->nextChromo = newChromo;
+
+            tailPtr = tailPtr->nextChromo;
         }
         else if (ch != ':')
         {
@@ -158,47 +260,80 @@ int main(int argc, char *argv[])
         ch = fgetc(populationFilePtr);
     }
 
+    // for (size_t i = 0; i < MAX_GEN; i++)
+    // {
+
     // FITNESS CALCULATIONS
 
-    chromosome *temp = headPtr;
+    chromosome *tempChromoFitness = headPtr;
 
-    chromosome *bestChromo;
+    chromosome *bestFitness;
 
-    chromosome *worstChromo;
+    chromosome *worstFitness;
 
-    while (temp->nextChromo != NULL)
+    while (tempChromoFitness->nextChromo != NULL)
     {
-        int fitness = calculateFitness(temp, PROB_SIZE);
-        temp->fitness = fitness;
+        int fitness = calculateFitness(tempChromoFitness, PROB_SIZE);
+        tempChromoFitness->fitness = fitness;
 
-        if(bestChromo && worstChromo){
-            if(fitness < bestChromo){
-                bestChromo = temp;
+        if (bestFitness && worstFitness)
+        {
+            if (fitness < bestFitness->fitness)
+            {
+                bestFitness = tempChromoFitness;
             }
-            else if(fitness > worstChromo){
-                worstChromo = temp;
+            else if (fitness > worstFitness->fitness)
+            {
+                worstFitness = tempChromoFitness;
             }
         }
-        else{
-            bestChromo = temp;
-            worstChromo = temp;
+        else
+        {
+            bestFitness = tempChromoFitness;
+            worstFitness = tempChromoFitness;
         }
-        
 
-        temp = temp->nextChromo;
+        tempChromoFitness = tempChromoFitness->nextChromo;
     }
 
     // RANK CALCULATIONS
 
+    chromosome *tempChromoRank = headPtr;
 
+    chromosome *bestRank;
+    chromosome *worstRank;
 
+    while (tempChromoRank->nextChromo != NULL)
+    {
+        double rank = calculateRank(tempChromoRank, bestFitness, worstFitness);
+        tempChromoRank->rank = rank;
 
+        if (bestRank && worstRank)
+        {
+            if (rank < bestRank->rank)
+            {
+                bestRank = tempChromoRank;
+            }
+            else if (rank > worstRank->rank)
+            {
+                worstRank = tempChromoRank;
+            }
+        }
+        else
+        {
+            bestRank = tempChromoRank;
+            worstRank = tempChromoRank;
+        }
 
+        tempChromoRank = tempChromoRank->nextChromo;
+    }
 
-    printChromos(headPtr, POP_SIZE, PROB_SIZE);
+    // printChromos(headPtr, POP_SIZE, PROB_SIZE);
 
-    printf("\n--------------------------------\n");
+    // printf("------------------------\n");
+
+    sortChromos(headPtr, POP_SIZE);
 
     // SORTING
-
+    // }
 }

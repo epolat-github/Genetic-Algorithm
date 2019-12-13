@@ -5,12 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         
+        
         {
             "name": "gcc-7 build and debug active file",
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/${fileBasenameNoExtension}",
-            "args": [10 8 10],
+            "args": ["10", "8", "10"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -11,25 +11,46 @@ struct node{
     int value;
 };
 
+#include <stdio.h>
+ 
+ 
+int calculatePower(int base, int exponent){
+    int result = 1;
+    int i;
+    
+    for (i = 0; i < exponent; i++)
+    {
+        result *= base;
+    }
+    
+    return result;
+}
+
+
 
 int main() {
 
-    struct deneme deneme1;
-    struct node node1;
+    int a = 3;
+	int b = 3;
+    int result = calculatePower(a,b);
+	printf("%d", result);
 
-    node1.value = 1;
+    // struct deneme deneme1;
+    // struct node node1;
 
-    strcpy(deneme1.name, "deneme1");
-    deneme1.head = &node1;
+    // node1.value = 1;
 
-    struct deneme best;
+    // strcpy(deneme1.name, "deneme1");
+    // deneme1.head = &node1;
 
-    best = deneme1;
+    // struct deneme best;
 
-    deneme1.head->value = 0;
+    // best = deneme1;
+
+    // deneme1.head->value = 0;
 
 
-    printf("%d\n", best.head->value);
+    // printf("%d\n", best.head->value);
 
 
 
