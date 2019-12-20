@@ -25,7 +25,7 @@ typedef struct chromosome
 
 void addGene(gene *newGene, chromosome *tailChromo, int value)
 {
-    newGene->nextGene = NULL;
+    newGene->nextGene = (gene*)NULL;
     newGene->value = value;
 
     gene *geneTemp = tailChromo->headGene;
@@ -210,20 +210,109 @@ chromosome *findChromo(chromosome *head, int index)
     chromosome *temp = head;
     int count = 0;
 
-    while (temp->nextChromo != NULL)
+    for (size_t i = 0; i < index-1; i++)
     {
-        if (count == index - 1)
-        {
-            return temp;
-        }
-        count++;
         temp = temp->nextChromo;
     }
+
+    return temp;
+
+    // chromosome *temp = head;
+    // int count = 0;
+
+    // while (temp->nextChromo != NULL)
+    // {
+    //     if (count == index - 1)
+    //     {
+    //         return temp;
+    //     }
+    //     count++;
+    //     temp = temp->nextChromo;
+    // }
 }
 
-void xover(chromosome *firstChromo, chromosome *secondChromo)
+gene *findGene(chromosome *head, int index)
 {
+    gene *temp = head->headGene;
+    int count = 0;
+
+    for (size_t i = 0; i < index-1; i++)
+    {
+        temp = temp->nextGene;
+    }
+
+    return temp;
     
+
+    // while (temp->nextGene != NULL)
+    // {
+    //     if (count == index - 1)
+    //     {
+    //         return temp;
+    //     }
+    //     count++;
+    //     temp = temp->nextGene;
+    // }
+}
+
+void xover(chromosome *firstChromo, chromosome *secondChromo, int start, int end)
+{
+    printf("\nXOVER START\n\n");
+    printChromos(firstChromo, 1, 10);
+    printChromos(secondChromo, 1, 10);
+    printf("*********************\n");
+
+    gene *firstStartGeneTemp = findGene(firstChromo, start);
+    gene *secondStartGeneTemp = findGene(secondChromo, start);
+
+    if (start == 1)
+    {
+        firstChromo->headGene = secondStartGeneTemp;
+        secondChromo->headGene = firstStartGeneTemp;
+    }
+    else
+    {
+        findGene(firstChromo, start - 1)->nextGene = secondStartGeneTemp;
+        findGene(secondChromo, start - 1)->nextGene = firstStartGeneTemp;
+    }
+
+    if (end != 10)
+    {
+        gene *firstEndGeneTemp = findGene(secondChromo, end + 1);
+        gene *secondEndGeneTemp = findGene(firstChromo, end + 1);
+
+        findGene(firstChromo, end)->nextGene = firstEndGeneTemp;
+        findGene(secondChromo, end)->nextGene = secondEndGeneTemp;
+    }
+
+    printChromos(firstChromo, 1, 10);
+    printChromos(secondChromo, 1, 10);
+}
+
+void mutation(chromosome *firstChromo, chromosome *secondChromo, int mutationGeneNumber)
+{
+    gene *firstChromoGene = findGene(firstChromo, mutationGeneNumber);
+    gene *secondChromoGene = findGene(secondChromo, mutationGeneNumber);
+
+    //complement of first chromo
+    if(firstChromoGene->value == 0){
+        firstChromoGene->value = 1;
+    }
+    else{
+        firstChromoGene->value = 0;
+    }
+
+    //complement of first chromo
+    if(secondChromoGene->value == 0){
+        secondChromoGene->value = 1;
+    }
+    else{
+        secondChromoGene->value = 0;
+    }
+
+    printf("\nAFTER MUTATION\n");
+    printChromos(firstChromo, 1, 10);
+    printChromos(secondChromo, 1, 10);
 }
 
 int main(int argc, char *argv[])
@@ -260,7 +349,7 @@ int main(int argc, char *argv[])
     }
 
     // INITIALIZE POPULATION
-    chromosome headChromo = {NULL, NULL, NULL, 0, 0};
+    chromosome headChromo = {NULL, NULL, 0, 0};
 
     chromosome *newChromo;
     gene *newGene;
@@ -293,7 +382,9 @@ int main(int argc, char *argv[])
     }
     fclose(populationFilePtr);
 
-    for (size_t i = 0; i < MAX_GEN; i++)
+    int generationCount = 0;
+
+    for (size_t i = 0; i < MAX_GEN+1; i++)
     {
 
         // FITNESS CALCULATIONS
@@ -368,6 +459,7 @@ int main(int argc, char *argv[])
         // SORTING
 
         headPtr = sortChromos(headPtr, POP_SIZE);
+        printf("GENERATION: %d\n", (int)i);
         printChromos(headPtr, POP_SIZE, PROB_SIZE);
         printf("\n");
         printf("Best chromosome found so far: ");
@@ -385,7 +477,11 @@ int main(int argc, char *argv[])
             if (selectionChar == ' ')
             {
                 //next step = xover
-                xover(findChromo(headPtr, firstIndex), findChromo(headPtr, secondIndex));
+                //xoverı yaz
+                xover(findChromo(headPtr, firstIndex), findChromo(headPtr, secondIndex), 5, 10);
+                mutation(findChromo(headPtr, firstIndex), findChromo(headPtr, secondIndex), 10);
+                firstIndex = -1;
+                secondIndex = -1;
             }
             else if (selectionChar != ':')
             {
