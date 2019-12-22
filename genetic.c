@@ -68,7 +68,7 @@ void printChromos(chromosome *headChromo, int POP_SIZE, int PROB_SIZE)
             }
             if (i == PROB_SIZE - 1)
             {
-                printf("%d %d %f\n", geneTemp->value, tempp->fitness, tempp->rank);
+                printf("%d -> %d\n", geneTemp->value, tempp->fitness);
             }
             else
             {
@@ -257,7 +257,7 @@ gene *findGene(chromosome *head, int index)
 
 void xover(chromosome *firstChromo, chromosome *secondChromo, int start, int end)
 {
-    printf("xover numbers: %d %d\n", start, end);
+    // printf("xover numbers: %d %d\n", start, end);
     // printf("\nXOVER START\n\n");
     // printChromos(firstChromo, 1, 10);
     // printChromos(secondChromo, 1, 10);
@@ -292,7 +292,7 @@ void xover(chromosome *firstChromo, chromosome *secondChromo, int start, int end
 
 void mutation(chromosome *firstChromo, chromosome *secondChromo, int mutationGeneNumber)
 {
-    printf("mutation number: %d\n", mutationGeneNumber);
+    // printf("mutation number: %d\n", mutationGeneNumber);
 
     gene *firstChromoGene = findGene(firstChromo, mutationGeneNumber);
     gene *secondChromoGene = findGene(secondChromo, mutationGeneNumber);
@@ -324,24 +324,31 @@ void mutation(chromosome *firstChromo, chromosome *secondChromo, int mutationGen
 
 chromosome *deepChromoCopy(chromosome *mainChromo)
 {
-    chromosome *temp = malloc(sizeof(chromosome));
+    chromosome *copyChromo = malloc(sizeof(chromosome));
 
-    temp->fitness = mainChromo->fitness;
-    temp->rank = mainChromo->rank;
-    temp->headGene = mainChromo->headGene;
+    copyChromo->fitness = mainChromo->fitness;
+    copyChromo->rank = mainChromo->rank;
+    
+    gene *tempGene = malloc(sizeof(gene));
+    copyChromo->headGene = tempGene;
+    gene *tempMainGene = mainChromo->headGene;
 
-    gene *mainGeneTraverse = mainChromo->headGene;
-    gene *tempGeneTraverse = temp->headGene;
+    tempGene->nextGene = NULL;
+    tempGene->value = tempMainGene->value;
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < 9; i++)
     {
-        tempGeneTraverse->nextGene = mainGeneTraverse->nextGene;
+        tempGene->nextGene = malloc(sizeof(gene));
+        tempGene->nextGene->nextGene = NULL;
+        tempGene->nextGene->value = tempMainGene->nextGene->value;
 
-        mainGeneTraverse = mainGeneTraverse->nextGene;
-        tempGeneTraverse = tempGeneTraverse->nextGene;
+        tempMainGene = tempMainGene->nextGene;
+        tempGene = tempGene->nextGene;
     }
     
-}   
+
+    return copyChromo;    
+}
 
 int main(int argc, char *argv[])
 {
@@ -412,10 +419,10 @@ int main(int argc, char *argv[])
 
     int generationCount = 0;
 
-    chromosome overallBestChromo;
-    chromosome bestFitness;
+    chromosome *overallBestChromo;
+    chromosome *bestFitness;
 
-    chromosome worstFitness;
+    chromosome *worstFitness;
 
     for (size_t i = 0; i < MAX_GEN + 1; i++)
     {
@@ -432,19 +439,19 @@ int main(int argc, char *argv[])
 
             if (i != 0)
             {
-                if (fitness < bestFitness.fitness)
+                if (fitness < bestFitness->fitness)
                 {
-                    bestFitness = *tempChromoFitness;
+                    bestFitness = tempChromoFitness;
                 }
-                else if (fitness > worstFitness.fitness)
+                else if (fitness > worstFitness->fitness)
                 {
-                    worstFitness = *tempChromoFitness;
+                    worstFitness = tempChromoFitness;
                 }
             }
             else
             {
-                bestFitness = *tempChromoFitness;
-                worstFitness = *tempChromoFitness;
+                bestFitness = tempChromoFitness;
+                worstFitness = tempChromoFitness;
             }
 
             tempChromoFitness = tempChromoFitness->nextChromo;
@@ -453,11 +460,29 @@ int main(int argc, char *argv[])
         // SETTING OVERALL BEST
         if (i == 0)
         {
-            overallBestChromo = bestFitness;
+            overallBestChromo = deepChromoCopy(bestFitness);
+            // memcpy(&overallBestChromo, &bestFitness, sizeof(chromosome));
+
+            // overallBestChromo.headGene = bestFitness.headGene;
+
+            // gene overallBestGene = *(overallBestChromo.headGene);
+            // gene bestFitnessGene = *(bestFitness.headGene);
+
+            // for (size_t i = 0; i < 10; i++)
+            // {
+            //     overallBestGene.value = bestFitnessGene.value;
+
+            //     overallBestGene = *(overallBestGene.nextGene);
+            //     if (overallBestGene.nextGene == NULL)
+            //     {
+            //         break;
+            //     }
+            //     bestFitnessGene = *(overallBestGene.nextGene);
+            // }
         }
-        else if (bestFitness.fitness < overallBestChromo.fitness)
+        else if (bestFitness->fitness < overallBestChromo->fitness)
         {
-            overallBestChromo = bestFitness;
+            overallBestChromo = deepChromoCopy(bestFitness);
         }
 
         // RANK CALCULATIONS
@@ -470,7 +495,7 @@ int main(int argc, char *argv[])
         // while (tempChromoRank->nextChromo != NULL)
         for (size_t i = 0; i < POP_SIZE; i++)
         {
-            double rank = calculateRank(tempChromoRank, &bestFitness, &worstFitness);
+            double rank = calculateRank(tempChromoRank, bestFitness, worstFitness);
             tempChromoRank->rank = rank;
 
             if (bestRank && worstRank)
@@ -502,15 +527,15 @@ int main(int argc, char *argv[])
         headPtr = sortChromos(headPtr, POP_SIZE);
 
         //PRINTING
-        printf("\nGENERATION: %d\n", (int)i);
+        printf("GENERATION: %d\n", (int)i);
         printChromos(headPtr, POP_SIZE, PROB_SIZE);
-        printf("\n");
+        // printf("\n");
         printf("Best chromosome found so far: ");
-        printChromos(&overallBestChromo, 1, 10);
-        printf("\n");
-        printf("Wors chromo: ");
-        printChromos(&worstFitness, 1, 10);
-        printf("\n");
+        printChromos(overallBestChromo, 1, 10);
+        // printf("\n");
+        // printf("Wors chromo: ");
+        // printChromos(worstFitness, 1, 10);
+        // printf("\n");
 
         if (i == 10)
         {
@@ -579,7 +604,7 @@ int main(int argc, char *argv[])
             {
                 //next step = xover
                 //xoverı yaz
-                printf("selection numbers: %d %d\n", firstSelectionIndex, secondSelectionIndex);
+                // printf("selection numbers: %d %d\n", firstSelectionIndex, secondSelectionIndex);
                 xover(findChromo(headPtr, firstSelectionIndex), findChromo(headPtr, secondSelectionIndex), firstXoverIndex, secondXoverIndex);
                 mutation(findChromo(headPtr, firstSelectionIndex), findChromo(headPtr, secondSelectionIndex), mutationIndex);
                 firstSelectionIndex = -1;
