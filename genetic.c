@@ -25,7 +25,7 @@ typedef struct chromosome
 
 void addGene(gene *newGene, chromosome *tailChromo, int value)
 {
-    newGene->nextGene = (gene*)NULL;
+    newGene->nextGene = (gene *)NULL;
     newGene->value = value;
 
     gene *geneTemp = tailChromo->headGene;
@@ -138,11 +138,12 @@ chromosome *sortChromos(chromosome *head, int POP_SIZE)
     chromosome *previousChromo = NULL;     //previous chromo of the least
     chromosome *nextChromo = NULL;         //next chromo of the least
 
-    for (size_t i = 0; i < 8; i++)
+    for (size_t i = 0; i < POP_SIZE + 1; i++)
     {
         // printf("girdi\n");
 
         while (tempChromo->nextChromo != NULL)
+        // for (size_t j = 0; i < POP_SIZE; j++)
         {
             if (tempChromo->fitness < leastFitnessChromo->fitness)
             {
@@ -210,7 +211,7 @@ chromosome *findChromo(chromosome *head, int index)
     chromosome *temp = head;
     int count = 0;
 
-    for (size_t i = 0; i < index-1; i++)
+    for (size_t i = 0; i < index - 1; i++)
     {
         temp = temp->nextChromo;
     }
@@ -236,13 +237,12 @@ gene *findGene(chromosome *head, int index)
     gene *temp = head->headGene;
     int count = 0;
 
-    for (size_t i = 0; i < index-1; i++)
+    for (size_t i = 0; i < index - 1; i++)
     {
         temp = temp->nextGene;
     }
 
     return temp;
-    
 
     // while (temp->nextGene != NULL)
     // {
@@ -257,10 +257,11 @@ gene *findGene(chromosome *head, int index)
 
 void xover(chromosome *firstChromo, chromosome *secondChromo, int start, int end)
 {
-    printf("\nXOVER START\n\n");
-    printChromos(firstChromo, 1, 10);
-    printChromos(secondChromo, 1, 10);
-    printf("*********************\n");
+    printf("xover numbers: %d %d\n", start, end);
+    // printf("\nXOVER START\n\n");
+    // printChromos(firstChromo, 1, 10);
+    // printChromos(secondChromo, 1, 10);
+    // printf("*********************\n");
 
     gene *firstStartGeneTemp = findGene(firstChromo, start);
     gene *secondStartGeneTemp = findGene(secondChromo, start);
@@ -285,35 +286,62 @@ void xover(chromosome *firstChromo, chromosome *secondChromo, int start, int end
         findGene(secondChromo, end)->nextGene = secondEndGeneTemp;
     }
 
-    printChromos(firstChromo, 1, 10);
-    printChromos(secondChromo, 1, 10);
+    // printChromos(firstChromo, 1, 10);
+    // printChromos(secondChromo, 1, 10);
 }
 
 void mutation(chromosome *firstChromo, chromosome *secondChromo, int mutationGeneNumber)
 {
+    printf("mutation number: %d\n", mutationGeneNumber);
+
     gene *firstChromoGene = findGene(firstChromo, mutationGeneNumber);
     gene *secondChromoGene = findGene(secondChromo, mutationGeneNumber);
 
     //complement of first chromo
-    if(firstChromoGene->value == 0){
+    if (firstChromoGene->value == 0)
+    {
         firstChromoGene->value = 1;
     }
-    else{
+    else
+    {
         firstChromoGene->value = 0;
     }
 
     //complement of first chromo
-    if(secondChromoGene->value == 0){
+    if (secondChromoGene->value == 0)
+    {
         secondChromoGene->value = 1;
     }
-    else{
+    else
+    {
         secondChromoGene->value = 0;
     }
 
-    printf("\nAFTER MUTATION\n");
-    printChromos(firstChromo, 1, 10);
-    printChromos(secondChromo, 1, 10);
+    // printf("\nAFTER MUTATION\n");
+    // printChromos(firstChromo, 1, 10);
+    // printChromos(secondChromo, 1, 10);
 }
+
+chromosome *deepChromoCopy(chromosome *mainChromo)
+{
+    chromosome *temp = malloc(sizeof(chromosome));
+
+    temp->fitness = mainChromo->fitness;
+    temp->rank = mainChromo->rank;
+    temp->headGene = mainChromo->headGene;
+
+    gene *mainGeneTraverse = mainChromo->headGene;
+    gene *tempGeneTraverse = temp->headGene;
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        tempGeneTraverse->nextGene = mainGeneTraverse->nextGene;
+
+        mainGeneTraverse = mainGeneTraverse->nextGene;
+        tempGeneTraverse = tempGeneTraverse->nextGene;
+    }
+    
+}   
 
 int main(int argc, char *argv[])
 {
@@ -384,40 +412,52 @@ int main(int argc, char *argv[])
 
     int generationCount = 0;
 
-    for (size_t i = 0; i < MAX_GEN+1; i++)
+    chromosome overallBestChromo;
+    chromosome bestFitness;
+
+    chromosome worstFitness;
+
+    for (size_t i = 0; i < MAX_GEN + 1; i++)
     {
 
         // FITNESS CALCULATIONS
 
         chromosome *tempChromoFitness = headPtr;
 
-        chromosome *bestFitness;
-
-        chromosome *worstFitness;
-
-        while (tempChromoFitness->nextChromo != NULL)
+        // while (tempChromoFitness->nextChromo != NULL)
+        for (size_t i = 0; i < POP_SIZE; i++)
         {
             int fitness = calculateFitness(tempChromoFitness, PROB_SIZE);
             tempChromoFitness->fitness = fitness;
 
-            if (bestFitness && worstFitness)
+            if (i != 0)
             {
-                if (fitness < bestFitness->fitness)
+                if (fitness < bestFitness.fitness)
                 {
-                    bestFitness = tempChromoFitness;
+                    bestFitness = *tempChromoFitness;
                 }
-                else if (fitness > worstFitness->fitness)
+                else if (fitness > worstFitness.fitness)
                 {
-                    worstFitness = tempChromoFitness;
+                    worstFitness = *tempChromoFitness;
                 }
             }
             else
             {
-                bestFitness = tempChromoFitness;
-                worstFitness = tempChromoFitness;
+                bestFitness = *tempChromoFitness;
+                worstFitness = *tempChromoFitness;
             }
 
             tempChromoFitness = tempChromoFitness->nextChromo;
+        }
+
+        // SETTING OVERALL BEST
+        if (i == 0)
+        {
+            overallBestChromo = bestFitness;
+        }
+        else if (bestFitness.fitness < overallBestChromo.fitness)
+        {
+            overallBestChromo = bestFitness;
         }
 
         // RANK CALCULATIONS
@@ -427,9 +467,10 @@ int main(int argc, char *argv[])
         chromosome *bestRank;
         chromosome *worstRank;
 
-        while (tempChromoRank->nextChromo != NULL)
+        // while (tempChromoRank->nextChromo != NULL)
+        for (size_t i = 0; i < POP_SIZE; i++)
         {
-            double rank = calculateRank(tempChromoRank, bestFitness, worstFitness);
+            double rank = calculateRank(tempChromoRank, &bestFitness, &worstFitness);
             tempChromoRank->rank = rank;
 
             if (bestRank && worstRank)
@@ -459,47 +500,118 @@ int main(int argc, char *argv[])
         // SORTING
 
         headPtr = sortChromos(headPtr, POP_SIZE);
-        printf("GENERATION: %d\n", (int)i);
+
+        //PRINTING
+        printf("\nGENERATION: %d\n", (int)i);
         printChromos(headPtr, POP_SIZE, PROB_SIZE);
         printf("\n");
         printf("Best chromosome found so far: ");
-        printChromos(bestFitness, 1, 10);
+        printChromos(&overallBestChromo, 1, 10);
         printf("\n");
+        printf("Wors chromo: ");
+        printChromos(&worstFitness, 1, 10);
+        printf("\n");
+
+        if (i == 10)
+        {
+            break;
+        }
+
+        //MUTATION GENE
+
+        int mutationIndex = -1;
+
+        char mutationStr[3];
+
+        // fgets(mutationStr, 3, mutateFilePtr);
+        fscanf(mutateFilePtr, "%d\n", &mutationIndex);
+
+        // char mutationChar = fgetc(mutateFilePtr);
+
+        // mutationIndex = atoi(&mutationChar);
+        // mutationChar = fgetc(mutateFilePtr);
+
+        //XOVER GENES
+
+        int firstXoverIndex = -1;
+        int secondXoverIndex = -1;
+
+        char xoverBuffer[6];
+
+        fgets(xoverBuffer, 6, xoverFilePtr);
+
+        char *xoverIndexPtr = strtok(xoverBuffer, ":");
+        firstXoverIndex = atoi(xoverIndexPtr);
+
+        xoverIndexPtr = strtok(NULL, ":");
+        secondXoverIndex = atoi(xoverIndexPtr);
+
+        // char xoverChar = fgetc(xoverFilePtr);
+
+        // fscanf(xoverFilePtr, "%d:%d\n", &firstXoverIndex, &secondXoverIndex);
+
+        // while (xoverChar != '\n')
+        // {
+        //     if (xoverChar != ':')
+        //     {
+        //         int index = atoi(&xoverChar);
+        //         if (firstXoverIndex == -1)
+        //         {
+        //             firstXoverIndex = index;
+        //         }
+        //         else if (secondXoverIndex == -1)
+        //         {
+        //             secondXoverIndex = index;
+        //         }
+        //     }
+        //     xoverChar = fgetc(xoverFilePtr);
+        // }
 
         // SELECTION
 
         char selectionChar = fgetc(selectionFilePtr);
-        int firstIndex = -1;
-        int secondIndex = -1;
+        int firstSelectionIndex = -1;
+        int secondSelectionIndex = -1;
 
         while (selectionChar != EOF)
         {
-            if (selectionChar == ' ')
+            if (selectionChar == ' ' || selectionChar == '\n')
             {
                 //next step = xover
                 //xoverı yaz
-                xover(findChromo(headPtr, firstIndex), findChromo(headPtr, secondIndex), 5, 10);
-                mutation(findChromo(headPtr, firstIndex), findChromo(headPtr, secondIndex), 10);
-                firstIndex = -1;
-                secondIndex = -1;
+                printf("selection numbers: %d %d\n", firstSelectionIndex, secondSelectionIndex);
+                xover(findChromo(headPtr, firstSelectionIndex), findChromo(headPtr, secondSelectionIndex), firstXoverIndex, secondXoverIndex);
+                mutation(findChromo(headPtr, firstSelectionIndex), findChromo(headPtr, secondSelectionIndex), mutationIndex);
+                firstSelectionIndex = -1;
+                secondSelectionIndex = -1;
+                if (selectionChar == '\n')
+                {
+                    break;
+                }
             }
             else if (selectionChar != ':')
             {
                 int index = atoi(&selectionChar);
-                if (firstIndex == -1)
+                if (firstSelectionIndex == -1)
                 {
-                    firstIndex = index;
+                    firstSelectionIndex = index;
                 }
-                else if (secondIndex == -1)
+                else if (secondSelectionIndex == -1)
                 {
-                    secondIndex = index;
+                    secondSelectionIndex = index;
                 }
             }
 
             selectionChar = fgetc(selectionFilePtr);
         }
+
+        firstXoverIndex = -1;
+        secondXoverIndex = -1;
     }
-    free(headPtr);
+    fclose(xoverFilePtr);
+    fclose(mutateFilePtr);
+    fclose(selectionFilePtr);
+    // free(headPtr);
     free(tailPtr);
     free(newChromo);
     free(newChromo);

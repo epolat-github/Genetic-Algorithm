@@ -30,10 +30,26 @@ int calculatePower(int base, int exponent){
 
 int main() {
 
-    int a = 3;
-	int b = 3;
-    int result = calculatePower(a,b);
-	printf("%d", result);
+
+    FILE *ptr = fopen("mutate", "r");
+
+    int a = 10;
+
+    int mutations[a];
+
+    char str[3];
+    for (size_t i = 0; i < a; i++)
+    {
+        fgets(str, 3, ptr);
+        mutations[i] = atoi(&str);
+        printf("%d\n", mutations[i]);
+    }
+    
+
+    // int a = 3;
+	// int b = 3;
+    // int result = calculatePower(a,b);
+	// printf("%d", result);
 
     // struct deneme deneme1;
     // struct node node1;

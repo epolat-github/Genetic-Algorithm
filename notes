@@ -1,3 +1,18 @@
 10. gene mutation olmuyor, son gen bulma sıkıntılı
 pop_size benzerlerini en globale taşı. Parametre gönderimlerini değiştir, gönderme.
 chromoda sıkıntı olursa findChromo'yu kontrol et.
+
+int mutationIndex = -1;
+
+        char mutationStr[3];
+
+        fgets(mutationStr, 3, mutateFilePtr);
+        mutationIndex = atoi(mutationStr);
+
+        // char mutationChar = fgetc(mutateFilePtr);
+
+        // mutationIndex = atoi(&mutationChar);
+        // mutationChar = fgetc(mutateFilePtr);
+fitness calc'ta sıkıntı var, 8. indexe erişemiyor. 
+best chromo genel ölçüm olmalı
+generation count variable redundant
